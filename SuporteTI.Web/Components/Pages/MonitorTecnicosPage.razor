@@ -1,0 +1,52 @@
+﻿@page "/monitor-tecnicos"
+@inject SuporteTI.Web.Services.ApiClient ApiClient
+@inject ISnackbar Snackbar
+@using SuporteTI.Shared.Models.Dto
+
+<MudText Typo="Typo.h3" GutterBottom="true">Monitoramento: Status dos Técnicos</MudText>
+
+<MudTable Items="_listaDeTecnicos" Dense="true" Hover="true" Striped="true" Loading="_isLoading" Class="mt-4">
+    <HeaderContent>
+        <MudTh>Nome do Técnico</MudTh>
+        <MudTh>Status</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nome">@context.NomeTecnico</MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip Text="@context.StatusDisponibilidade" Color="@GetStatusColor(context.StatusDisponibilidade)" Size="Size.Small" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private List<TecnicoStatusDto> _listaDeTecnicos = new List<TecnicoStatusDto>();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var metrics = await ApiClient.GetDashboardMetricsAsync();
+            _listaDeTecnicos = metrics.StatusTecnicos;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar técnicos: {ex.Message}", Severity.Error);
+        }
+        _isLoading = false;
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Online" => Color.Success,
+            "Almoco" => Color.Warning,
+            "Cafe" => Color.Warning,
+            _ => Color.Error
+        };
+    }
+}

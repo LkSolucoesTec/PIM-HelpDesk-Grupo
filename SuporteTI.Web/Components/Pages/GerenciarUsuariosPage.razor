@@ -1,0 +1,139 @@
+﻿@page "/usuarios"
+@inject SuporteTI.Web.Services.ApiClient ApiClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@using SuporteTI.Shared.Models.Dto
+
+<MudText Typo="Typo.h3" GutterBottom="true">Gerenciar Usuários e Técnicos</MudText>
+
+<MudTable Items="_listaDeUsuarios" Dense="true" Hover="true" Striped="true"
+          Loading="_isLoading"
+          Filter="_filterFunc"
+          Class="mt-4">
+
+    <ToolBarContent>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => OpenFormDialog())">
+            Cadastrar Novo
+        </MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Buscar" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+    </ToolBarContent>
+
+    <HeaderContent>
+        <MudTh>Nome</MudTh>
+        <MudTh>E-mail (Login)</MudTh>
+        <MudTh>Papel</MudTh>
+        <MudTh>Setor / Especialidade</MudTh>
+        <MudTh>Ações</MudTh>
+    </HeaderContent>
+
+    <RowTemplate>
+        <MudTd DataLabel="Nome">@context.Nome</MudTd>
+        <MudTd DataLabel="E-mail">@context.Email</MudTd>
+        <MudTd DataLabel="Papel">
+            <MudChip Text="@context.Papel" Color="@GetPapelColor(context.Papel)" Size="Size.Small" />
+        </MudTd>
+        <MudTd DataLabel="Setor/Especialidade">
+            @(context.Papel == "Usuario" ? context.Setor : context.Especialidade)
+        </MudTd>
+        <MudTd DataLabel="Ações">
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Outlined" Color="Color.Error"
+                           OnClick="@(async () => await DeleteUser(context.Id, context.Nome))" />
+        </MudTd>
+    </RowTemplate>
+
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private List<UserListDto> _listaDeUsuarios = new List<UserListDto>();
+    private bool _isLoading = true;
+    private string _searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            _listaDeUsuarios = await ApiClient.GetUsuariosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar usuários: {ex.Message}", Severity.Error);
+        }
+        _isLoading = false;
+    }
+
+    private async Task OpenFormDialog()
+    {
+        var dialog = DialogService.Show<UserFormDialog>("Cadastrar Novo Usuário");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var novoUsuario = (UserCreateDto)result.Data;
+            try
+            {
+                await ApiClient.CreateUsuarioAsync(novoUsuario);
+                Snackbar.Add("Usuário cadastrado com sucesso!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao salvar: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task DeleteUser(int id, string nome)
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "Confirmar Exclusão",
+            $"Tem certeza que deseja deletar o usuário '{nome}'?",
+            yesText: "Deletar", cancelText: "Cancelar");
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await ApiClient.DeleteUsuarioAsync(id);
+                Snackbar.Add("Usuário deletado!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao deletar: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private bool _filterFunc(UserListDto user)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (user.Nome.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (user.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (user.Papel.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private Color GetPapelColor(string papel)
+    {
+        return papel switch
+        {
+            "Gerencia" => Color.Error,
+            "Tecnico" => Color.Warning,
+            _ => Color.Info
+        };
+    }
+}

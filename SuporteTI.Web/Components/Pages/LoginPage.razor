@@ -1,0 +1,83 @@
+﻿@page "/login"
+@layout SuporteTI.Web.Components.Layout.EmptyLayout
+@inject SuporteTI.Web.Services.AuthService AuthService
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+
+<MudPaper Elevation="4" Class="pa-8" Width="100%" MaxWidth="500px">
+    <MudStack Spacing="4">
+        <MudImage Src="/images/IAsistente.png" Height="100" Width="100" ObjectFit="ObjectFit.Contain" Class="mx-auto" />
+        <MudText Typo="Typo.h5" Align="Align.Center"><b>IA'sistente</b></MudText>
+        <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-4">Painel de Gerência</MudText>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+        }
+
+        <MudTextField @bind-Value="_email" Label="Login" Variant="Variant.Outlined"
+                      T="string" OnKeyDown="OnKeyDown" />
+
+        <MudTextField @bind-Value="_password" Label="Senha" Variant="Variant.Outlined"
+                      InputType="InputType.Password" T="string" OnKeyDown="OnKeyDown" />
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="HandleLogin">
+            Entrar
+        </MudButton>
+
+        <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-2"
+                 Style="color: var(--mud-palette-primary); cursor: pointer;"
+                 @onclick="ShowPasswordReminder">Lembrete de Logins (TCC)</MudText>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private string _email = "gerencia";
+    private string _password = "gerencia123";
+    private string _errorMessage = "";
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = "";
+        try
+        {
+            var response = await AuthService.LoginAsync(_email, _password);
+            switch (response.Papel)
+            {
+                case "Gerencia": Navigation.NavigateTo("/"); break;
+                case "Tecnico": Navigation.NavigateTo("/fila"); break;
+                case "Usuario": Navigation.NavigateTo("/chat"); break;
+                default: _errorMessage = "Papel de usuário desconhecido."; break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleLogin();
+        }
+    }
+
+    // CORREÇÃO: Método do lembrete (não quebra mais)
+    private void ShowPasswordReminder()
+    {
+        var message = (MarkupString)@"
+                        <b>Usuário Padrão:</b><br>
+                        Login: user<br>
+                        Senha: usuario123<br><br>
+                        <b>Técnico Padrão:</b><br>
+                        Login: tecnico<br>
+                        Senha: tecnico123<br><br>
+                        <b>Gerência:</b><br>
+                        Login: gerencia<br>
+                        Senha: gerencia123
+                      ";
+        DialogService.ShowMessageBox("Lembrete de Logins (TCC)", message, "OK");
+    }
+}

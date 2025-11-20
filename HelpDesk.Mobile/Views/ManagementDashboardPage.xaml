@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HelpDesk.Mobile.Views.ManagementDashboardPage"
+             xmlns:vm="clr-namespace:HelpDesk.Mobile.ViewModels"
+             xmlns:dto="clr-namespace:SuporteTI.Shared.Models.Dto;assembly=SuporteTI.Shared"
+             Title="Dashboard Gerência"
+             BackgroundColor="#f4f6fb">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="15">
+
+            <Label Text="Visão Geral" FontAttributes="Bold" FontSize="22" TextColor="#2563eb" />
+
+            <!-- CARD TOTAL -->
+            <Frame BackgroundColor="White" CornerRadius="10" HasShadow="True" Padding="15">
+                <VerticalStackLayout>
+                    <Label Text="Total de Chamados" TextColor="Gray"/>
+                    <Label Text="{Binding DashboardStats.TotalChamados}" FontSize="30" FontAttributes="Bold" TextColor="#2563eb"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- GRID DE STATUS -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                <Frame Grid.Row="0" Grid.Column="0" Padding="15" CornerRadius="10">
+                    <VerticalStackLayout>
+                        <Label Text="Abertos" TextColor="Gray"/>
+                        <Label Text="{Binding DashboardStats.TotalAbertos}" FontSize="24" FontAttributes="Bold" TextColor="#f59e0b"/>
+                    </VerticalStackLayout>
+                </Frame>
+                <Frame Grid.Row="0" Grid.Column="1" Padding="15" CornerRadius="10">
+                    <VerticalStackLayout>
+                        <Label Text="Resolvidos (IA)" TextColor="Gray"/>
+                        <Label Text="{Binding DashboardStats.TotalResolvidosIA}" FontSize="24" FontAttributes="Bold" TextColor="#10b981"/>
+                    </VerticalStackLayout>
+                </Frame>
+                <Frame Grid.Row="1" Grid.Column="0" Padding="15" CornerRadius="10">
+                    <VerticalStackLayout>
+                        <Label Text="Resolvidos (Téc)" TextColor="Gray"/>
+                        <Label Text="{Binding DashboardStats.TotalResolvidosTecnico}" FontSize="24" FontAttributes="Bold" TextColor="#10b981"/>
+                    </VerticalStackLayout>
+                </Frame>
+                <Frame Grid.Row="1" Grid.Column="1" Padding="15" CornerRadius="10">
+                    <VerticalStackLayout>
+                        <Label Text="T. Médio (h)" TextColor="Gray"/>
+                        <Label Text="{Binding DashboardStats.TempoMedioResolucaoHoras}" FontSize="24" FontAttributes="Bold" TextColor="#2563eb"/>
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- BOTÕES DE AÇÃO -->
+            <Button Text="Gerenciar Usuários" Command="{Binding IrParaUsuariosCommand}" BackgroundColor="#2563eb" TextColor="White" CornerRadius="10" Margin="0,10,0,0"/>
+            <Button Text="Sair da Conta" Command="{Binding LogoutCommand}" BackgroundColor="#ef4444" TextColor="White" CornerRadius="10"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,15 @@
+﻿@inject NavigationManager Navigation
+
+@code {
+    // O OnInitialized() foi REMOVIDO
+
+    // CORREÇÃO (Batch 109): Usamos OnAfterRenderAsync para evitar a NavigationException
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Só roda na primeira vez que a página carrega
+        if (firstRender)
+        {
+            Navigation.NavigateTo("/login"); // Expulsa!
+        }
+    }
+}

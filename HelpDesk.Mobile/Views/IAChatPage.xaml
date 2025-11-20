@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HelpDesk.Mobile.Views.IAChatPage"
+             xmlns:vm="clr-namespace:HelpDesk.Mobile.ViewModels"
+             Title="Assistente Virtual"
+             BackgroundColor="#f4f6fb">
+
+    <!-- Grid Principal: Organiza a tela em 3 linhas -->
+    <Grid RowDefinitions="*, Auto, Auto" RowSpacing="0">
+
+        <!-- 1. LISTA DE MENSAGENS -->
+        <CollectionView Grid.Row="0" 
+                        ItemsSource="{Binding ChatHistory}" 
+                        Margin="10,10,10,0"
+                        ItemsUpdatingScrollMode="KeepLastItemInView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ChatHistoryItem">
+                    <VerticalStackLayout Margin="0,5">
+
+                        <!-- Layout Horizontal da Mensagem -->
+                        <HorizontalStackLayout Spacing="8">
+
+                            <!-- Triggers de Alinhamento -->
+                            <HorizontalStackLayout.Triggers>
+                                <!-- Usuário -> Direita -->
+                                <DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding IsUser}" Value="True">
+                                    <Setter Property="HorizontalOptions" Value="End" />
+                                </DataTrigger>
+                                <!-- Robô -> Esquerda -->
+                                <DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding IsUser}" Value="False">
+                                    <Setter Property="HorizontalOptions" Value="Start" />
+                                </DataTrigger>
+                            </HorizontalStackLayout.Triggers>
+
+                            <!-- AVATAR ROBÔ (Esquerda) -->
+                            <!-- Só aparece se IsUser for False -->
+                            <Image Source="iasistente.jpg" WidthRequest="35" HeightRequest="35" VerticalOptions="End">
+                                <Image.Triggers>
+                                    <DataTrigger TargetType="Image" Binding="{Binding IsUser}" Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Image.Triggers>
+                                <Image.Clip>
+                                    <EllipseGeometry Center="17.5,17.5" RadiusX="17.5" RadiusY="17.5" />
+                                </Image.Clip>
+                            </Image>
+
+                            <!-- BALÃO DA MENSAGEM -->
+                            <Frame CornerRadius="15" Padding="12" BorderColor="Transparent" HasShadow="True">
+                                <Frame.Triggers>
+                                    <!-- Cor Usuário (Azul) -->
+                                    <DataTrigger TargetType="Frame" Binding="{Binding IsUser}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="#2563eb" />
+                                    </DataTrigger>
+                                    <!-- Cor Robô (Branco) -->
+                                    <DataTrigger TargetType="Frame" Binding="{Binding IsUser}" Value="False">
+                                        <Setter Property="BackgroundColor" Value="White" />
+                                    </DataTrigger>
+                                </Frame.Triggers>
+
+                                <Label Text="{Binding Message}" 
+                                       LineBreakMode="WordWrap"
+                                       MaximumWidthRequest="240"
+                                       FontSize="15">
+                                    <Label.Triggers>
+                                        <!-- Texto Usuário (Branco) -->
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsUser}" Value="True">
+                                            <Setter Property="TextColor" Value="White" />
+                                        </DataTrigger>
+                                        <!-- Texto Robô (Escuro) -->
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsUser}" Value="False">
+                                            <Setter Property="TextColor" Value="#1e293b" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Frame>
+
+                            <!-- AVATAR USUÁRIO (Direita) -->
+                            <!-- Só aparece se IsUser for True -->
+                            <Image Source="user_avatar.png" WidthRequest="35" HeightRequest="35" VerticalOptions="End">
+                                <Image.Triggers>
+                                    <DataTrigger TargetType="Image" Binding="{Binding IsUser}" Value="False">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Image.Triggers>
+                                <Image.Clip>
+                                    <EllipseGeometry Center="17.5,17.5" RadiusX="17.5" RadiusY="17.5" />
+                                </Image.Clip>
+                            </Image>
+
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- 2. BOTÕES DE CONFIRMAÇÃO (Aparecem se a IA pedir) -->
+        <HorizontalStackLayout Grid.Row="1" 
+                               IsVisible="{Binding MostrarBotoesConfirmacao}" 
+                               HorizontalOptions="Center" 
+                               Spacing="15" 
+                               Padding="10">
+            <Button Text="✅ Sim" Command="{Binding ConfirmarResolucaoCommand}" CommandParameter="{x:Boolean true}" BackgroundColor="#10b981" TextColor="White"/>
+            <Button Text="❌ Não" Command="{Binding ConfirmarResolucaoCommand}" CommandParameter="{x:Boolean false}" BackgroundColor="#ef4444" TextColor="White"/>
+        </HorizontalStackLayout>
+
+        <!-- 3. ÁREA DE DIGITAÇÃO -->
+        <Grid Grid.Row="2" ColumnDefinitions="*, Auto" Padding="10,5,10,10" BackgroundColor="#f4f6fb">
+            <Frame Grid.Column="0" Padding="10,0" CornerRadius="25" HasShadow="False" BorderColor="#e5e7eb" BackgroundColor="White" HeightRequest="50">
+                <Entry Text="{Binding CurrentMessage}" 
+                       Placeholder="Digite sua mensagem..." 
+                       ReturnCommand="{Binding SendMessageCommand}"
+                       VerticalOptions="Center"
+                       TextColor="Black"/>
+            </Frame>
+
+            <Button Grid.Column="1" Text="➤" FontSize="20" 
+                    Command="{Binding SendMessageCommand}"
+                    IsEnabled="{Binding IsBusy}"
+                    BackgroundColor="#2563eb" TextColor="White"
+                    CornerRadius="25" WidthRequest="50" HeightRequest="50" Margin="8,0,0,0"/>
+        </Grid>
+
+    </Grid>
+</ContentPage>

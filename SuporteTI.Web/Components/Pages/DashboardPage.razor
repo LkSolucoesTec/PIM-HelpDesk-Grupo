@@ -1,0 +1,106 @@
+﻿@page "/"
+@inject SuporteTI.Web.Services.ApiClient ApiClient
+@using SuporteTI.Shared.Models.Dto
+@using MudBlazor
+
+<MudText Typo="Typo.h3" GutterBottom="true">Dashboard (Visão Geral)</MudText>
+
+<MudGrid Spacing="3" Justify="Justify.Center" Class="mb-4">
+    <MudItem xs="12" sm="4" md="2">
+        <MudPaper Elevation="2" Class="pa-4 d-flex flex-column align-center" Height="100%">
+            <MudText Typo="Typo.h1" Color="Color.Primary"><b>@_metrics.TotalChamados</b></MudText>
+            <MudText Typo="Typo.body1">Total de Chamados</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4" md="2">
+        <MudPaper Elevation="2" Class="pa-4 d-flex flex-column align-center" Height="100%">
+            <MudText Typo="Typo.h1" Color="Color.Error"><b>@_metrics.TotalAbertos</b></MudText>
+            <MudText Typo="Typo.body1">Chamados Abertos</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4" md="2">
+        <MudPaper Elevation="2" Class="pa-4 d-flex flex-column align-center" Height="100%">
+            <MudText Typo="Typo.h1" Color="Color.Warning"><b>@_metrics.TotalEmAndamento</b></MudText>
+            <MudText Typo="Typo.body1">Em Andamento</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4" md="2">
+        <MudPaper Elevation="2" Class="pa-4 d-flex flex-column align-center" Height="100%">
+            <MudText Typo="Typo.h1" Color="Color.Info"><b>@_metrics.TotalResolvidosIA</b></MudText>
+            <MudText Typo="Typo.body1">Resolvidos (IA)</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4" md="2">
+        <MudPaper Elevation="2" Class="pa-4 d-flex flex-column align-center" Height="100%">
+            <MudText Typo="Typo.h1" Color="Color.Success"><b>@_metrics.TotalResolvidosTecnico</b></MudText>
+            <MudText Typo="Typo.body1">Resolvidos (Técnico)</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="2" Class="pa-4" Height="100%">
+            <MudText Typo="Typo.h6" GutterBottom="true">Resoluções por Tipo</MudText>
+            <MudChart ChartType="ChartType.Donut" InputData="@_chartData" InputLabels="@_chartLabels" Width="100%" Height="300px" />
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="2" Class="pa-4" Height="100%">
+            <MudText Typo="Typo.h6" GutterBottom="true">Status dos Técnicos</MudText>
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                    <tr>
+                        <th>Técnico</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_metrics.StatusTecnicos != null)
+                    {
+                        @foreach (var tecnico in _metrics.StatusTecnicos)
+                        {
+                            <tr>
+                                <td>@tecnico.NomeTecnico</td>
+                                <td>
+                                    <MudChip Text="@tecnico.StatusDisponibilidade" Color="@GetStatusColor(tecnico.StatusDisponibilidade)" Size="Size.Small" />
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private DashboardMetricsDto _metrics = new DashboardMetricsDto();
+    private double[] _chartData = { 0, 0 };
+    private string[] _chartLabels = { "IA", "Técnico" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _metrics = await ApiClient.GetDashboardMetricsAsync();
+            _chartData = new double[] { _metrics.TotalResolvidosIA, _metrics.TotalResolvidosTecnico };
+        }
+        catch (Exception)
+        {
+            // Erro ao carregar (API pode estar offline)
+        }
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Online" => Color.Success,
+            "Almoco" => Color.Warning,
+            "Cafe" => Color.Warning,
+            _ => Color.Error
+        };
+    }
+}

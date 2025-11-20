@@ -1,0 +1,83 @@
+﻿@using SuporteTI.Shared.Models.Dto
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@DialogTitle</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" Model="@_model">
+            <MudTextField @bind-Value="_model.Nome" Label="Nome Completo"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          For="@(() => _model.Nome)" Required="true" />
+
+            <MudTextField @bind-Value="_model.Email" Label="E-mail (Login)"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          For="@(() => _model.Email)" Required="true" InputType="InputType.Email" />
+
+            <MudTextField @bind-Value="_model.Senha" Label="Senha"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          For="@(() => _model.Senha)" Required="true" InputType="InputType.Password" />
+
+            <MudSelect @bind-Value="_model.Papel" Label="Papel / Função"
+                       Variant="Variant.Outlined" Margin="Margin.Dense"
+                       For="@(() => _model.Papel)" Required="true">
+                <MudSelectItem Value="@("Usuario")">Usuário (Colaborador)</MudSelectItem>
+                <MudSelectItem Value="@("Tecnico")">Técnico de TI</MudSelectItem>
+                <MudSelectItem Value="@("Gerencia")">Gerência</MudSelectItem>
+            </MudSelect>
+
+            <MudDivider Class="my-4" />
+
+            @if (_model.Papel == "Usuario")
+            {
+                <MudTextField @bind-Value="_model.Setor" Label="Departamento / Setor"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_model.Telefone" Label="Telefone"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" />
+            }
+
+            @if (_model.Papel == "Tecnico")
+            {
+                <MudTextField @bind-Value="_model.Especialidade" Label="Especialidade / Área de Atuação"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_model.Telefone" Label="Telefone"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" />
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public UserCreateDto UserToEdit { get; set; }
+
+    private MudForm _form;
+    private UserCreateDto _model = new UserCreateDto() { Papel = "Usuario" }; // Padrão
+    private string DialogTitle = "Cadastrar Novo Usuário";
+
+    protected override void OnInitialized()
+    {
+        if (UserToEdit != null)
+        {
+            _model = UserToEdit;
+            DialogTitle = "Editar Usuário";
+        }
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (_form.IsValid)
+        {
+            MudDialog.Close(DialogResult.Ok(_model));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

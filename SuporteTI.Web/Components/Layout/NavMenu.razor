@@ -1,0 +1,30 @@
+﻿@using MudBlazor
+@inject SuporteTI.Web.Services.AuthService AuthService
+
+<MudNavMenu>
+
+    @if (AuthService.UserRole == "Gerencia")
+    {
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+
+        <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.PersonAdd" Expanded="true">
+            <MudNavLink Href="usuarios" Icon="@Icons.Material.Filled.People">Usuários e Técnicos</MudNavLink>
+        </MudNavGroup>
+
+        <MudNavGroup Title="Monitoramento" Icon="@Icons.Material.Filled.Monitor" Expanded="true">
+            <MudNavLink Href="monitor-ia" Icon="@Icons.Material.Filled.SmartToy">Atendimentos (IA)</MudNavLink>
+            <MudNavLink Href="monitor-tecnicos" Icon="@Icons.Material.Filled.SupportAgent">Atendimentos (Técnicos)</MudNavLink>
+        </MudNavGroup>
+    }
+
+    @if (AuthService.UserRole == "Tecnico")
+    {
+        <MudNavLink Href="/fila" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ListAlt">Fila de Chamados</MudNavLink>
+    }
+
+    @if (AuthService.UserRole == "Usuario")
+    {
+        <MudNavLink Href="/chat" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Chat">Abrir Chamado</MudNavLink>
+    }
+
+</MudNavMenu>

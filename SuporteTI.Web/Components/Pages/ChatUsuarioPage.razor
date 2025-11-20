@@ -1,0 +1,76 @@
+﻿@page "/chat"
+@using MudBlazor
+@inject ChatPageViewModel ViewModel
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<MudPaper Elevation="0" Class="d-flex flex-column" Style="height: 100%;">
+
+    <MudPaper ID="chatContainer" Elevation="0" Class="flex-grow-1 pa-4" Style="overflow-y: auto;">
+        @foreach (var msg in ViewModel.Mensagens)
+        {
+            <MudStack Row="true" Justify="@(msg.IsUsuario? Justify.FlexEnd: Justify.FlexStart)" Class="mb-3">
+
+                @if (!msg.IsUsuario)
+                {
+                    <MudAvatar Image="images/IAsistente.png" />
+                }
+
+                <MudPaper Elevation="2" Class="pa-3" Style="@($"background-color: {(msg.IsUsuario ? "#30495c" : "#f5f5f5")}; color: {(msg.IsUsuario ? "white" : "black")}; max-width: 70%;")">
+                    <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@msg.Mensagem</MudText>
+                </MudPaper>
+
+            </MudStack>
+        }
+
+        @if (ViewModel.IsEnviando)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        }
+    </MudPaper>
+
+    @if (ViewModel.MostrarBotoesConfirmacao)
+    {
+        <MudPaper Elevation="2" Class="pa-2 d-flex justify-end">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => ViewModel.ConfirmarResolucao(true))" Class="mx-1">✅ Sim</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@(() => ViewModel.ConfirmarResolucao(false))" Class="mx-1">❌ Não</MudButton>
+        </MudPaper>
+    }
+
+    <MudPaper Elevation="2" Class="pa-3">
+        <MudTextField @bind-Value="ViewModel.MensagemAtual"
+                      Placeholder="Digite sua mensagem..."
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.End"
+                      OnAdornmentClick="ViewModel.EnviarMensagem"
+                      AdornmentIcon="@Icons.Material.Filled.Send"
+                      OnKeyDown="OnKeyDown"
+                      Disabled="@ViewModel.IsEnviando" />
+    </MudPaper>
+</MudPaper>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ViewModel.OnChange += OnViewModelChange;
+    }
+
+    private async void OnViewModelChange()
+    {
+        await InvokeAsync(StateHasChanged);
+        await JSRuntime.InvokeVoidAsync("scrollToBottom", "chatContainer");
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ViewModel.EnviarMensagem();
+        }
+    }
+
+    public void Dispose()
+    {
+        ViewModel.OnChange -= OnViewModelChange;
+    }
+}

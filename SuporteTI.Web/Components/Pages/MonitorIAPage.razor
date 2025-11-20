@@ -1,0 +1,42 @@
+﻿@page "/monitor-ia"
+@inject SuporteTI.Web.Services.ApiClient ApiClient
+@inject ISnackbar Snackbar
+@using SuporteTI.Shared.Models.Dto
+
+<MudText Typo="Typo.h3" GutterBottom="true">Monitoramento: Resolvidos pela IA</MudText>
+
+<MudTable Items="_listaDeTickets" Dense="true" Hover="true" Striped="true" Loading="_isLoading" Class="mt-4">
+    <HeaderContent>
+        <MudTh>ID</MudTh>
+        <MudTh>Título</MudTh>
+        <MudTh>Solicitante</MudTh>
+        <MudTh>Data Abertura</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="ID">@context.Id</MudTd>
+        <MudTd DataLabel="Título">@context.Titulo</MudTd>
+        <MudTd DataLabel="Solicitante">@context.NomeSolicitante</MudTd>
+        <MudTd DataLabel="Data Abertura">@context.DataAbertura</MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private List<TicketListDto> _listaDeTickets = new List<TicketListDto>();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _listaDeTickets = await ApiClient.GetTicketsResolvidosIAAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar tickets: {ex.Message}", Severity.Error);
+        }
+        _isLoading = false;
+    }
+}

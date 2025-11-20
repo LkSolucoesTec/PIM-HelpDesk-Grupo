@@ -1,0 +1,22 @@
+Ignorar pastas de build (bin e obj)
+
+[Bb]in/
+[Oo]bj/
+
+Ignorar arquivos do Visual Studio
+
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+Ignorar configurações locais que podem ter senhas
+
+appsettings.Development.json
+local.settings.json
+
+Ignorar pastas do MAUI/Android/iOS geradas
+
+Generated/
+enc_temp_folder/

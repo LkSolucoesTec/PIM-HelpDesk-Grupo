@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HelpDesk.Mobile.Views.ClientDashboardPage"
+             xmlns:vm="clr-namespace:HelpDesk.Mobile.ViewModels"
+             Title="Área do Cliente"
+             BackgroundColor="{StaticResource BackgroundColor}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Cabeçalho de Boas Vindas -->
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Olá," FontSize="20" TextColor="{StaticResource SecondaryTextColor}" />
+                <Label Text="{Binding UserName}" FontSize="28" FontAttributes="Bold" TextColor="{StaticResource PrimaryColor}" />
+                <Label Text="Como podemos ajudar você hoje?" FontSize="16" TextColor="{StaticResource TextColor}" />
+            </VerticalStackLayout>
+
+            <!-- BOTÃO PRINCIPAL: CHAT IA -->
+            <Frame BackgroundColor="{StaticResource PrimaryColor}" CornerRadius="15" HasShadow="True" HeightRequest="160">
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding IrParaChatIACommand}" />
+                </Frame.GestureRecognizers>
+
+                <Grid RowDefinitions="*, Auto" ColumnDefinitions="*, Auto">
+                    <VerticalStackLayout Grid.Row="0" Grid.Column="0" VerticalOptions="Center">
+                        <Label Text="Assistente Virtual" TextColor="White" FontSize="22" FontAttributes="Bold" />
+                        <Label Text="Descreva seu problema e a IA tentará resolver agora mesmo." TextColor="#e0e7ff" FontSize="14" />
+                    </VerticalStackLayout>
+
+                    <!-- Ícone Simulado -->
+                    <Label Grid.Row="0" Grid.Column="1" Text="🤖" FontSize="50" VerticalOptions="Center" HorizontalOptions="End"/>
+
+                    <Label Grid.Row="1" Grid.ColumnSpan="2" Text="Toque para iniciar o chat ->" TextColor="White" HorizontalOptions="End" FontSize="12" Margin="0,10,0,0"/>
+                </Grid>
+            </Frame>
+
+            <Label Text="Outras Opções" FontAttributes="Bold" FontSize="18" TextColor="{StaticResource TextColor}" Margin="0,10,0,0" />
+
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="15">
+
+                <!-- Botão Meus Chamados -->
+                <Frame Grid.Column="0" BackgroundColor="White" CornerRadius="15" HasShadow="True" HeightRequest="120">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding IrParaMeusChamadosCommand}" />
+                    </Frame.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                        <Label Text="📋" FontSize="30" HorizontalOptions="Center" TextColor="{StaticResource TextColor}"/>
+                        <Label Text="Meus Chamados" TextColor="{StaticResource TextColor}" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Botão Novo Chamado (Manual) -->
+                <Frame Grid.Column="1" BackgroundColor="White" CornerRadius="15" HasShadow="True" HeightRequest="120">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding IrParaNovoChamadoManualCommand}" />
+                    </Frame.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                        <Label Text="➕" FontSize="30" HorizontalOptions="Center" TextColor="{StaticResource TextColor}"/>
+                        <Label Text="Abrir Ticket" TextColor="{StaticResource TextColor}" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- Aviso Informativo -->
+            <Frame BackgroundColor="#fff3cd" CornerRadius="10" Padding="15" Margin="0,20,0,0" BorderColor="Transparent">
+                <Label Text="💡 Dica: Use o Assistente Virtual para respostas imediatas antes de abrir um ticket manual." TextColor="#856404" FontSize="12" HorizontalTextAlignment="Center"/>
+            </Frame>
+
+            <!-- BOTÃO DE SAIR (LOGOUT) -->
+            <Button Text="Sair da Conta" 
+                    Command="{Binding LogoutCommand}"
+                    BackgroundColor="{StaticResource AttentionColor}" 
+                    TextColor="White" 
+                    CornerRadius="20"
+                    HeightRequest="50"
+                    Margin="0,20,0,0"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

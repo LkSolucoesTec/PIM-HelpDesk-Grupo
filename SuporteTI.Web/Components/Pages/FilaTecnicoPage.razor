@@ -1,0 +1,292 @@
+﻿@page "/fila"
+@inject SuporteTI.Web.Services.ApiClient ApiClient
+@inject ISnackbar Snackbar
+@using SuporteTI.Shared.Models.Dto
+@using MudBlazor
+
+<!-- CORREÇÃO (Respiro): Usando MudContainer -->
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Fila de Atendimento</MudText>
+
+    <MudGrid Spacing="2">
+
+        <!-- Coluna 1: Menu de Status -->
+        <MudItem xs="12" md="3">
+            <MudPaper Height="100%" Class="pa-4" Style="@($"background-color: {Colors.Grey.Lighten4};")">
+                <MudText Typo="Typo.h6" GutterBottom="true">Meu Status</MudText>
+
+                <MudSelect @bind-Value="StatusAtual" Label="Definir meu status" Variant="Variant.Outlined" T="string" Class="mb-4">
+                    <MudSelectItem Value="@("Online")">🟢 Online</MudSelectItem>
+                    <MudSelectItem Value="@("Almoco")">🟠 Em Almoço</MudSelectItem>
+                    <MudSelectItem Value="@("Cafe")">🟠 Pausa - Café</MudSelectItem>
+                    <MudSelectItem Value="@("Offline")">🔴 Offline</MudSelectItem>
+                </MudSelect>
+
+                <MudText Typo="Typo.h6" Class="mt-4" GutterBottom="true">Filas</MudText>
+                <MudNavMenu>
+                    <MudNavLink Icon="@Icons.Material.Filled.ListAlt" OnClick="@(() => LoadTickets("Abertos"))">Chamados Abertos</MudNavLink>
+                    <MudNavLink Icon="@Icons.Material.Filled.PlaylistPlay" OnClick="@(() => LoadTickets("Andamento"))">Meus Chamados</MudNavLink>
+                    <MudNavLink Icon="@Icons.Material.Filled.DoneAll" OnClick="@(() => LoadTickets("ResolvidoIA"))">Resolvidos (IA)</MudNavLink>
+                </MudNavMenu>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Coluna 2: Fila de Tickets -->
+        <MudItem xs="12" md="4">
+            <MudPaper Height="80vh" Style="overflow-y: auto;">
+                @if (_isLoading)
+                {
+                    <div class="d-flex justify-center align-center" style="height: 100%;">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                    </div>
+                }
+                else
+                {
+                    <MudList Clickable="true">
+                        @if (_listaDeTickets != null)
+                        {
+                            @foreach (var ticket in _listaDeTickets)
+                            {
+                                <MudListItem OnClick="@(() => LoadTicketDetail(ticket.Id))"
+                                             Class="@(_ticketSelecionado?.Id == ticket.Id ? "mud-theme-primary-hover" : "")">
+
+                                    <!-- TAGS VISUAIS (NOVO) -->
+                                    <MudStack Row="true" Spacing="1" Class="mb-1">
+                                        @foreach (var tag in GerarTags(ticket.Titulo))
+                                        {
+                                            <MudChip Text="@tag.Texto"
+                                                     Color="@tag.Cor"
+                                                     Size="Size.Small"
+                                                     Icon="@tag.Icone"
+                                                     Label="true"
+                                                     Variant="Variant.Filled" />
+                                        }
+                                    </MudStack>
+
+                                    <MudText Typo="Typo.subtitle1"><b>@ticket.Titulo</b></MudText>
+                                    <MudText Typo="Typo.body2">Solicitante: @ticket.NomeSolicitante</MudText>
+                                    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-1">
+                                        <MudText Typo="Typo.caption">@ticket.DataAbertura</MudText>
+                                        <MudChip Text="@ticket.Status" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info" />
+                                    </MudStack>
+                                </MudListItem>
+                                <MudDivider />
+                            }
+                        }
+                    </MudList>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Coluna 3: Detalhe do Ticket -->
+        <MudItem xs="12" md="5">
+            <MudPaper Height="80vh" Class="pa-4" Style="overflow-y: auto;">
+                @if (_ticketSelecionado == null)
+                {
+                    <div class="d-flex justify-center align-center" style="height: 100%;">
+                        <MudText Typo="Typo.h6" Color="Color.Secondary">Selecione um ticket da fila para ver detalhes.</MudText>
+                    </div>
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2">@_ticketSelecionado.Titulo</MudText>
+                    <MudDivider Class="mb-4" />
+
+                    <MudText Typo="Typo.h6">Detalhes do Solicitante</MudText>
+                    <MudSimpleTable Dense="true" Hover="true" Class="mb-4">
+                        <tbody>
+                            <tr><td><b>Solicitante:</b></td><td>@_ticketSelecionado.NomeSolicitante</td></tr>
+                            <tr><td><b>Setor:</b></td><td>@_ticketSelecionado.SetorSolicitante</td></tr>
+                            <tr><td><b>Telefone:</b></td><td>@_ticketSelecionado.TelefoneSolicitante</td></tr>
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudText Typo="Typo.h6" Class="mt-4">Histórico da Conversa (Chatbot)</MudText>
+                    <!-- ÁREA DO CHAT (NOVO) -->
+                    <MudPaper Class="pa-3 mt-2 mb-4" Style="background-color: #f5f5f5; max-height: 300px; overflow-y: auto;">
+                        @if (_ticketSelecionado.Historico != null && _ticketSelecionado.Historico.Any())
+                        {
+                            @foreach (var msg in _ticketSelecionado.Historico)
+                            {
+                                <MudStack Row="true" Justify="@(msg.Remetente == "Usuario" ? Justify.FlexEnd : Justify.FlexStart)" Class="mb-2">
+                                    <MudPaper Class="pa-2" Style="@($"background-color: {(msg.Remetente == "Usuario" ? "#dcf8c6" : "#ffffff")}; max-width: 80%; border-radius: 10px;")">
+                                        <MudText Typo="Typo.caption" Color="Color.Default"><b>@msg.Remetente</b> - @msg.Timestamp.ToString("HH:mm")</MudText>
+                                        <MudText Typo="Typo.body2">@msg.Conteudo</MudText>
+                                    </MudPaper>
+                                </MudStack>
+                            }
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Nenhum histórico de chat disponível.</MudText>
+                        }
+                    </MudPaper>
+
+                    <MudText Typo="Typo.h6" Class="mt-4">Ações do Técnico</MudText>
+
+                    @if (_ticketSelecionado.Status == "Aberto")
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" OnClick="AceitarTicket">Aceitar este Chamado</MudButton>
+                    }
+
+                    @if (_ticketSelecionado.Status == "EmAndamento")
+                    {
+                        <MudTextField @bind-Value="_observacaoTecnica" Label="Relatório de Fechamento (Obrigatório)" Variant="Variant.Outlined" Lines="4" Class="mb-2" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="FecharTicket">Fechar Chamado</MudButton>
+                    }
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private bool _isLoading = false;
+    private string _viewAtual = "Abertos";
+    private string _observacaoTecnica = "";
+
+    private List<TicketListDto> _listaDeTickets = new List<TicketListDto>();
+    private TicketDetailDto _ticketSelecionado;
+
+    private string _statusAtual = "Online";
+    private string StatusAtual
+    {
+        get => _statusAtual;
+        set
+        {
+            _statusAtual = value;
+            OnStatusChanged(_statusAtual);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTickets("Abertos");
+    }
+
+    private async Task LoadTickets(string tipo)
+    {
+        _isLoading = true;
+        _viewAtual = tipo;
+        _ticketSelecionado = null;
+        _listaDeTickets.Clear();
+
+        try
+        {
+            switch (tipo)
+            {
+                case "Abertos":
+                    _listaDeTickets = await ApiClient.GetTicketsAbertosAsync();
+                    break;
+                case "Andamento":
+                    _listaDeTickets = await ApiClient.GetTicketsEmAndamentoAsync();
+                    break;
+                case "ResolvidoIA":
+                    _listaDeTickets = await ApiClient.GetTicketsResolvidosIAAsync();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar tickets: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadTicketDetail(int id)
+    {
+        try
+        {
+            _observacaoTecnica = "";
+            _ticketSelecionado = await ApiClient.GetTicketDetailAsync(id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar detalhe: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnStatusChanged(string novoStatus)
+    {
+        try
+        {
+            await ApiClient.UpdateStatusAsync(novoStatus);
+            Snackbar.Add($"Status atualizado para: {novoStatus}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar status: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AceitarTicket()
+    {
+        try
+        {
+            await ApiClient.AceitarTicketAsync(_ticketSelecionado.Id);
+            Snackbar.Add("Ticket aceito!", Severity.Success);
+            await LoadTickets("Andamento");
+            _ticketSelecionado = null;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task FecharTicket()
+    {
+        if (string.IsNullOrWhiteSpace(_observacaoTecnica))
+        {
+            Snackbar.Add("O relatório de fechamento é obrigatório.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var request = new CloseTicketRequest
+            {
+                ChamadoId = _ticketSelecionado.Id,
+                ObservacaoTecnica = _observacaoTecnica
+            };
+            await ApiClient.FecharTicketAsync(request);
+            Snackbar.Add("Ticket fechado com sucesso!", Severity.Success);
+            await LoadTickets(_viewAtual);
+            _ticketSelecionado = null;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // === LÓGICA DAS TAGS ===
+    private class TagInfo { public string Texto { get; set; } public Color Cor { get; set; } public string Icone { get; set; } }
+
+    private List<TagInfo> GerarTags(string titulo)
+    {
+        var tags = new List<TagInfo>();
+        if (string.IsNullOrEmpty(titulo)) return tags;
+        var texto = titulo.ToLower();
+
+        if (texto.Contains("impressora") || texto.Contains("imprimir") || texto.Contains("toner"))
+            tags.Add(new TagInfo { Texto = "Impressora", Cor = Color.Warning, Icone = Icons.Material.Filled.Print });
+
+        if (texto.Contains("internet") || texto.Contains("wifi") || texto.Contains("conexão") || texto.Contains("rede"))
+            tags.Add(new TagInfo { Texto = "Rede", Cor = Color.Info, Icone = Icons.Material.Filled.Wifi });
+
+        if (texto.Contains("senha") || texto.Contains("login") || texto.Contains("acesso"))
+            tags.Add(new TagInfo { Texto = "Acesso", Cor = Color.Error, Icone = Icons.Material.Filled.Lock });
+
+        if (texto.Contains("computador") || texto.Contains("pc") || texto.Contains("notebook") || texto.Contains("lento"))
+            tags.Add(new TagInfo { Texto = "Hardware", Cor = Color.Primary, Icone = Icons.Material.Filled.Computer });
+
+        if (tags.Count == 0)
+            tags.Add(new TagInfo { Texto = "Geral", Cor = Color.Surface, Icone = Icons.Material.Filled.Label });
+
+        return tags;
+    }
+}

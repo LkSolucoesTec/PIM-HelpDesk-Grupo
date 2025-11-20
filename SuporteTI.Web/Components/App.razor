@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SuporteTI Web</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link href="SuporteTI.Web.styles.css" rel="stylesheet" />
+
+    <!-- Links do MudBlazor -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <!-- Este é o ponto de entrada -->
+    <Routes @rendermode="RenderMode.InteractiveServer" />
+
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="_framework/blazor.web.js"></script>
+
+    <!-- Script de Auto-Scroll do Chat -->
+    <script>
+        window.scrollToBottom = (elementId) => {
+            var element = document.getElementById(elementId);
+            if (element) {
+                element.scrollTop = element.scrollHeight;
+            }
+        };
+    </script>
+</body>
+
+</html>

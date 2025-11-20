@@ -1,0 +1,33 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HelpDesk.Mobile.Views.LoginPage"
+             xmlns:vm="clr-namespace:HelpDesk.Mobile.ViewModels"
+             Shell.NavBarIsVisible="False"
+             Title="Login"
+             x:DataType="vm:LoginViewModel">
+
+    <VerticalStackLayout Spacing="10" Padding="30" VerticalOptions="Center" BackgroundColor="{StaticResource BackgroundColor}">
+
+        <Image Source="iasistente.jpg" HeightRequest="100" Aspect="AspectFit"/>
+        <Label Text="IA'sistente" FontSize="32" HorizontalOptions="Center" FontAttributes="Bold" TextColor="{StaticResource TextColor}"/>
+        <Label Text="Acesso ao Suporte" FontSize="18" HorizontalOptions="Center" TextColor="{StaticResource SecondaryColor}"/>
+
+        <Frame Padding="5" CornerRadius="25" Margin="0,20,0,0">
+            <Entry Text="{Binding Email}" Placeholder="Login (ex: user)" Keyboard="Email"/>
+        </Frame>
+        <Frame Padding="5" CornerRadius="25">
+            <Entry Text="{Binding Password}" Placeholder="Senha (ex: usuario123)" IsPassword="True"/>
+        </Frame>
+
+        <Button Text="Entrar"
+                Command="{Binding LoginCommand}" 
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                Margin="0,20,0,0" CornerRadius="25"/>
+
+        <Label Text="user/usuario123 | tecnico/tecnico123 | gerencia/gerencia123"
+               HorizontalOptions="Center" FontSize="12" TextColor="Gray"/>
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"/>
+
+    </VerticalStackLayout>
+</ContentPage>

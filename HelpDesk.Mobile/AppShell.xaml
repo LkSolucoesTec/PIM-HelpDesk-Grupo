@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="HelpDesk.Mobile.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:HelpDesk.Mobile.Views"
+    Title="HelpDesk.Mobile"
+    Shell.NavBarIsVisible="True">
+
+    <!-- Rota de Login (Invisível na barra) -->
+    <ShellContent
+        Title="Login"
+        ContentTemplate="{DataTemplate views:LoginPage}"
+        Route="LoginPage"
+        Shell.FlyoutBehavior="Disabled" 
+        Shell.NavBarIsVisible="False"/>
+
+    <!-- ÁREA DO CLIENTE -->
+    <!-- Apenas o Dashboard aparece como Aba. As outras telas (Chat, Novo Chamado) abrem por cima. -->
+    <TabBar Route="ClientDashboardPage">
+        <ShellContent Title="Início" 
+                      ContentTemplate="{DataTemplate views:ClientDashboardPage}" 
+                      Icon="{StaticResource IconHome}" />
+    </TabBar>
+
+    <!-- ÁREA DO TÉCNICO -->
+    <!-- Removemos a aba 'Fila'. Agora ela é acessada pelo botão no Dashboard. -->
+    <TabBar Route="TechnicianDashboardPage">
+        <ShellContent Title="Painel Técnico" 
+                      ContentTemplate="{DataTemplate views:TechnicianDashboardPage}" 
+                      Icon="{StaticResource IconDashboard}" />
+    </TabBar>
+
+    <!-- ÁREA DA GERÊNCIA -->
+    <!-- Removemos a aba 'Usuários'. Agora ela é acessada pelo botão no Dashboard. -->
+    <TabBar Route="ManagementDashboardPage">
+        <ShellContent Title="Painel Gerência" 
+                      ContentTemplate="{DataTemplate views:ManagementDashboardPage}" 
+                      Icon="{StaticResource IconDashboard}" />
+    </TabBar>
+
+    <!-- Recursos de Ícones (Fallback para não quebrar se faltar imagem) -->
+    <Shell.Resources>
+        <FileImageSource x:Key="IconHome" File="home.png"/>
+        <FileImageSource x:Key="IconAdd" File="plus.png"/>
+        <FileImageSource x:Key="IconList" File="list.png"/>
+        <FileImageSource x:Key="IconDashboard" File="dashboard.png"/>
+        <FileImageSource x:Key="IconUsers" File="user.png"/>
+    </Shell.Resources>
+
+</Shell>
