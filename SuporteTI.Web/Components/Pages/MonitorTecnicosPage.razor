@@ -2,41 +2,88 @@
 @inject SuporteTI.Web.Services.ApiClient ApiClient
 @inject ISnackbar Snackbar
 @using SuporteTI.Shared.Models.Dto
+@using System.Timers
+@implements IDisposable
 
-<MudText Typo="Typo.h3" GutterBottom="true">Monitoramento: Status dos Técnicos</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Monitoramento de Equipe (Tempo Real)</MudText>
 
-<MudTable Items="_listaDeTecnicos" Dense="true" Hover="true" Striped="true" Loading="_isLoading" Class="mt-4">
-    <HeaderContent>
-        <MudTh>Nome do Técnico</MudTh>
-        <MudTh>Status</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Nome">@context.NomeTecnico</MudTd>
-        <MudTd DataLabel="Status">
-            <MudChip Text="@context.StatusDisponibilidade" Color="@GetStatusColor(context.StatusDisponibilidade)" Size="Size.Small" />
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager />
-    </PagerContent>
-</MudTable>
+<MudText Typo="Typo.caption" Class="mb-4">Atualizando automaticamente a cada 5 segundos...</MudText>
+
+@if (_isLoading && _listaDeTecnicos.Count == 0)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else
+{
+    <MudTable Items="_listaDeTecnicos" Hover="true" Striped="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>Técnico</MudTh>
+            <MudTh>Status Atual</MudTh>
+            <MudTh>Visual</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nome">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                    <MudText>@context.NomeTecnico</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip Text="@context.StatusDisponibilidade"
+                         Color="@GetStatusColor(context.StatusDisponibilidade)"
+                         Variant="Variant.Filled"
+                         Size="Size.Small" />
+            </MudTd>
+            <MudTd>
+                @if (context.StatusDisponibilidade == "Online")
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Wifi" Color="Color.Success" />
+                }
+                else if (context.StatusDisponibilidade == "Offline")
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.WifiOff" Color="Color.Error" />
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Coffee" Color="Color.Warning" />
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
 
 @code {
     private List<TecnicoStatusDto> _listaDeTecnicos = new List<TecnicoStatusDto>();
     private bool _isLoading = true;
+    private Timer _timer;
 
     protected override async Task OnInitializedAsync()
     {
+        await CarregarDados();
+
+        // Configura o Timer para atualizar a cada 5 segundos (5000ms)
+        _timer = new Timer(5000);
+        _timer.Elapsed += async (sender, e) => await InvokeAsync(CarregarDados);
+        _timer.AutoReset = true;
+        _timer.Enabled = true;
+    }
+
+    private async Task CarregarDados()
+    {
         try
         {
+            // Chama a API para pegar o status mais recente do banco
             var metrics = await ApiClient.GetDashboardMetricsAsync();
             _listaDeTecnicos = metrics.StatusTecnicos;
+            _isLoading = false;
+
+            // Força a interface a se redesenhar com os novos dados
+            StateHasChanged();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Snackbar.Add($"Erro ao carregar técnicos: {ex.Message}", Severity.Error);
+            // Ignora erros de conexão silenciosamente para não spamar o usuário
         }
-        _isLoading = false;
     }
 
     private Color GetStatusColor(string status)
@@ -44,9 +91,15 @@
         return status switch
         {
             "Online" => Color.Success,
-            "Almoco" => Color.Warning,
-            "Cafe" => Color.Warning,
-            _ => Color.Error
+            "Almoco" => Color.Error,   // Vermelho para almoço (indisponível)
+            "Cafe" => Color.Warning,   // Laranja para pausa
+            "Offline" => Color.Dark,   // Cinza/Preto para offline
+            _ => Color.Default
         };
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
     }
 }

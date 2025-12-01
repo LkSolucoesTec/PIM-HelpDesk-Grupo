@@ -1,6 +1,8 @@
 ﻿using SuporteTI.AdminDesktop.Services;
 using SuporteTI.Shared.Models.Dto;
-using System.Data;
+using System; // Necessário
+using System.Collections.Generic; // Necessário para List<>
+using System.Threading.Tasks; // Necessário para Task
 using System.Windows.Forms;
 
 namespace SuporteTI.AdminDesktop
@@ -8,16 +10,22 @@ namespace SuporteTI.AdminDesktop
     public partial class AdminPanelForm : Form
     {
         private readonly ApiClient _apiClient;
-        private List<UserListDto> _listaUsuarios; // Cache local
+        private List<UserListDto> _listaUsuarios;
 
         public AdminPanelForm()
         {
             InitializeComponent();
             _apiClient = new ApiClient();
+            // Vincula o evento manualmente ou via designer (garanta que só tem um vínculo)
             cmbPapel.SelectedIndexChanged += CmbPapel_SelectedIndexChanged;
         }
+
         private void CmbPapel_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // --- CORREÇÃO DO ERRO (NullReferenceException) ---
+            // Se a seleção for nula (ex: ao limpar o formulário), paramos aqui.
+            if (cmbPapel.SelectedItem == null) return;
+
             var papel = cmbPapel.SelectedItem.ToString();
 
             if (papel == "Usuario")
@@ -39,10 +47,11 @@ namespace SuporteTI.AdminDesktop
             }
         }
 
-        // Evento que roda quando o formulário é exibido
         private async void AdminPanelForm_Load(object sender, EventArgs e)
         {
-            lblBoasVindas.Text = $"Bem-vindo(a), {ApiClient.CurrentUser.Nome}!";
+            // Verifica se o usuário está logado antes de acessar a propriedade
+            string nomeUsuario = ApiClient.CurrentUser?.Nome ?? "Administrador";
+            lblBoasVindas.Text = $"Bem-vindo(a), {nomeUsuario}!";
             await CarregarUsuarios();
         }
 
@@ -50,13 +59,12 @@ namespace SuporteTI.AdminDesktop
         {
             try
             {
-                // 1. Busca os dados da API
                 _listaUsuarios = await _apiClient.GetUsuariosAsync();
-
-                // 2. Preenche o DataGridView (a tabela)
                 dataGridViewUsuarios.DataSource = null;
                 dataGridViewUsuarios.DataSource = _listaUsuarios;
-                dataGridViewUsuarios.Columns["Id"].Width = 50; // Ajusta colunas
+
+                if (dataGridViewUsuarios.Columns["Id"] != null)
+                    dataGridViewUsuarios.Columns["Id"].Width = 50;
             }
             catch (Exception ex)
             {
@@ -78,7 +86,6 @@ namespace SuporteTI.AdminDesktop
 
             try
             {
-                // 1. Monta o DTO com os dados do formulário
                 var novoUsuario = new UserCreateDto
                 {
                     Nome = txtNome.Text,
@@ -90,15 +97,13 @@ namespace SuporteTI.AdminDesktop
                     Telefone = txtTelefone.Text
                 };
 
-                // 2. Envia para a API
                 await _apiClient.CreateUsuarioAsync(novoUsuario);
 
                 MessageBox.Show("Usuário cadastrado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // 3. Limpa o formulário e recarrega a lista
                 LimparFormulario();
                 await CarregarUsuarios();
-                tabControl.SelectedTab = tabPageLista; // Muda para a aba da lista
+                tabControl.SelectedTab = tabPageLista;
             }
             catch (Exception ex)
             {
@@ -111,6 +116,8 @@ namespace SuporteTI.AdminDesktop
             txtNome.Text = "";
             txtEmail.Text = "";
             txtSenha.Text = "";
+            // Isso dispara o evento SelectedIndexChanged. 
+            // A correção no início desse método evita o crash.
             cmbPapel.SelectedIndex = -1;
             txtSetor.Text = "";
             txtEspecialidade.Text = "";
@@ -122,35 +129,27 @@ namespace SuporteTI.AdminDesktop
         {
             if (dataGridViewUsuarios.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Por favor, selecione um usuário na lista para excluir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Selecione um usuário para excluir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // 1. Pega o usuário selecionado
             var usuarioSelecionado = (UserListDto)dataGridViewUsuarios.SelectedRows[0].DataBoundItem;
 
-            // 2. Confirmação
-            var confirm = MessageBox.Show($"Tem certeza que deseja excluir '{usuarioSelecionado.Nome}'?", "Confirmar Exclusão", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (confirm == DialogResult.Yes)
+            if (MessageBox.Show($"Excluir '{usuarioSelecionado.Nome}'?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 try
                 {
-                    // 3. Manda deletar na API
                     await _apiClient.DeleteUsuarioAsync(usuarioSelecionado.Id);
-                    MessageBox.Show("Usuário excluído com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    // 4. Recarrega a lista
+                    MessageBox.Show("Usuário excluído.", "Sucesso");
                     await CarregarUsuarios();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Erro ao excluir", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        // Fecha o App ao sair
         private void AdminPanelForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             Application.Exit();
@@ -159,7 +158,7 @@ namespace SuporteTI.AdminDesktop
         private void btnConfig_Click(object sender, EventArgs e)
         {
             var configForm = new ConfiguracoesForm();
-            configForm.ShowDialog(); // Abre o novo formulário
+            configForm.ShowDialog();
         }
     }
 }
